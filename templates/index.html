@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вычисление тригонометрических функций</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .result-success {
+            background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+            color: white;
+        }
+        .result-error {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+        .result-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+        .result-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .info h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .info ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .info li {
+            margin: 5px 0;
+        }
+        .precision-value {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: normal;
+            color: #667eea;
+        }
+        .function-note {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📐 Тригонометрический калькулятор</h1>
+
+        <form method="POST" action="/" id="calcForm">
+            <div class="form-group">
+                <label for="function">Выберите функцию:</label>
+                <select name="function" id="function" required>
+                    {% for key, name in functions.items() %}
+                        <option value="{{ key }}" {% if selected_function == key %}selected{% endif %}>
+                            {{ name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <span class="function-note" id="functionNote"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="value">Введите значение x:</label>
+                <input type="text" name="value" id="value"
+                       placeholder="Например: 30, 0.5, 1.5708"
+                       value="{{ input_value }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="unit">Система измерения:</label>
+                <select name="unit" id="unit" required>
+                    <option value="radians" {% if selected_unit == 'radians' %}selected{% endif %}>
+                        📐 Радианы (rad)
+                    </option>
+                    <option value="degrees" {% if selected_unit == 'degrees' %}selected{% endif %}>
+                        📏 Градусы (°)
+                    </option>
+                </select>
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    Примечание: Градусы применяются для sin, cos, tan, cot.
+                    Для arcsin, arccos, arctan, arccot результат будет преобразован в градусы при выборе этой опции.
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label for="precision">
+                    Точность (количество знаков после запятой):
+                    <span class="precision-value" id="precisionValue">{{ selected_precision }}</span>
+                </label>
+                <input type="range" name="precision" id="precision"
+                       min="0" max="10" step="1"
+                       value="{{ selected_precision }}">
+            </div>
+
+            <div class="button-group">
+                <button type="submit">🔢 Вычислить</button>
+                <a href="/" style="flex: 1; text-decoration: none;">
+                    <button type="button" style="width: 100%;">🗑️ Очистить</button>
+                </a>
+            </div>
+        </form>
+
+        {% if result is not none %}
+            <div class="result-box result-success">
+                <h3>✅ Результат вычисления:</h3>
+                <p class="result-value">{{ result }}</p>
+            </div>
+        {% elif error %}
+            <div class="result-box result-error">
+                <h3>❌ Ошибка:</h3>
+                <p class="result-value">{{ error }}</p>
+            </div>
+        {% endif %}
+
+        <div class="info">
+            <h4>📖 Справка:</h4>
+            <ul>
+                <li><strong>sin(x), cos(x), tan(x), cot(x)</strong> — принимают значения в радианах или градусах</li>
+                <li><strong>cot(x) = 1/tan(x) = cos(x)/sin(x)</strong> — не определен при sin(x)=0</li>
+                <li><strong>arcsin(x), arccos(x)</strong> — определены только для x ∈ [-1, 1]</li>
+                <li><strong>arctan(x), arccot(x)</strong> — определены для любых x</li>
+                <li><strong>Точность</strong> — количество знаков после запятой (от 0 до 10)</li>
+            </ul>
+            <h4>📊 Примеры:</h4>
+            <ul>
+                <li>sin(30°) = 0.5</li>
+                <li>cos(60°) = 0.5</li>
+                <li>tan(45°) = 1</li>
+                <li>cot(45°) = 1</li>
+                <li>arcsin(0.5) = 30°</li>
+                <li>arccot(1) = 45°</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Отображение текущей точности
+        const precisionSlider = document.getElementById('precision');
+        const precisionValue = document.getElementById('precisionValue');
+        precisionSlider.addEventListener('input', function() {
+            precisionValue.textContent = this.value;
+        });
+
+        // Подсказки для функций
+        const functionSelect = document.getElementById('function');
+        const functionNote = document.getElementById('functionNote');
+        const notes = {
+            'sin': '📐 sin(x) - отношение противолежащего катета к гипотенузе',
+            'cos': '📐 cos(x) - отношение прилежащего катета к гипотенузе',
+            'tan': '📐 tan(x) = sin(x)/cos(x)',
+            'cot': '📐 cot(x) = cos(x)/sin(x) = 1/tan(x)',
+            'asin': '⚠️ arcsin(x) - определен только для x ∈ [-1, 1]',
+            'acos': '⚠️ arccos(x) - определен только для x ∈ [-1, 1]',
+            'atan': '📐 arctan(x) - определен для всех x',
+            'acot': '📐 arccot(x) - определен для всех x'
+        };
+        functionSelect.addEventListener('change', function() {
+            const note = notes[this.value] || '';
+            functionNote.textContent = note;
+        });
+        functionNote.textContent = notes[functionSelect.value] || '';
+
+        // Сброс при обновлении страницы
+        window.addEventListener('load', function() {
+            if (performance.navigation.type === 1) {
+                window.location.href = '/';
+            }
+        });
+    </script>
+</body>
+</html>
