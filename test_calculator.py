@@ -26,13 +26,13 @@ class TestTrigonometricCalculator(unittest.TestCase):
         self.assertTrue('Ошибка' in result)
 
     def test_6(self):
-        result = calculate_trig_function('cot', 45, 'degrees', 4)
-        self.assertEqual(result, 1)
-
-    def test_7(self):
         result = calculate_trig_function('asin', 2, 'radians', 4)
         self.assertTrue(isinstance(result, str))
         self.assertTrue('Ошибка' in result)
+
+    def test_7(self):
+        result = calculate_trig_function('cot', 45, 'degrees', 4)
+        self.assertEqual(result, 1)
 
     def test_8(self):
         result = calculate_trig_function('atan', 1, 'degrees', 4)
